@@ -37,10 +37,10 @@ RUN apt-get update && \
 	# clean temporary files
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# remove sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf && \
 # Nginx configuration
-RUN sed -i -e"s/worker_processes  1/worker_processes 5/" /etc/nginx/nginx.conf && \
-	sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf && \
-	sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 128m;\n\tproxy_buffer_size 256k;\n\tproxy_buffers 4 512k;\n\tproxy_busy_buffers_size 512k/" /etc/nginx/nginx.conf && \
+RUN sed -i -e"s/worker_processes  1/worker_processes auto/" /etc/nginx/nginx.conf && \
+	sed -i -e"s/keepalive_timeout 65/keepalive_timeout 65;\n\tclient_max_body_size 128m;\n\tproxy_buffer_size 256k;\n\tproxy_buffers 4 512k;\n\tproxy_busy_buffers_size 512k/" /etc/nginx/nginx.conf && \
 	echo "daemon off;" >> /etc/nginx/nginx.conf
 
 # PHP-FPM configuration
@@ -79,14 +79,14 @@ COPY ./config/cmd.sh /
 # mount www directory as a workdir
 COPY ./www/ /var/www
 
+# Remove ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default && \
 RUN rm -f /etc/nginx/sites-enabled/default && \
-	ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default && \
 	chmod 755 /cmd.sh && \
 	chown -Rf www-data.www-data /var/www && \
 	touch /var/log/cron.log && \
 	touch /etc/cron.d/crontasks
 
 # Expose Ports
-EXPOSE 80
+EXPOSE 80 8080
 
 ENTRYPOINT ["/bin/bash", "/cmd.sh"]
